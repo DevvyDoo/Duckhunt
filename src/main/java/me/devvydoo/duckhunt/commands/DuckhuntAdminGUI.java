@@ -95,6 +95,8 @@ public class DuckhuntAdminGUI implements Listener, InventoryHolder {
 
         if (game.getCurrentRound() instanceof WaitingRound && game.isGameReady())
             inventory.setItem(START_GAME_SLOT, createButton(Material.GREEN_WOOL, ChatColor.GREEN + ChatColor.BOLD.toString() + "Start Game!", ChatColor.GRAY + "Starts the game!"));
+        else if (game.getCurrentRound() instanceof WaitingRound && !game.isGameReady())
+            inventory.setItem(START_GAME_SLOT, createButton(Material.GRAY_WOOL, ChatColor.RED + ChatColor.BOLD.toString() + "Can't Start!", ChatColor.DARK_RED + "Either you don't have enough players, or!", ChatColor.DARK_RED + "There are missing spawn points!"));
         else
             inventory.setItem(START_GAME_SLOT, createButton(Material.RED_WOOL, ChatColor.RED + ChatColor.BOLD.toString() + "END GAME!!!", ChatColor.DARK_RED + "This will end the game and reset scoreboard progress!"));
     }
