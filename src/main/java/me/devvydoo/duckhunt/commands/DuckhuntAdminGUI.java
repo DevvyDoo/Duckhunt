@@ -148,8 +148,9 @@ public class DuckhuntAdminGUI implements Listener, InventoryHolder {
                 initInterface();
                 break;
             case START_GAME_SLOT:
-                if (game.isGameReady())
+                if (game.getCurrentRound() instanceof WaitingRound && game.isGameReady())
                     game.startGame();
+                else if (game.getCurrentRound() instanceof WaitingRound && !game.isGameReady()){}
                 else
                     game.endGame();
                 initInterface();

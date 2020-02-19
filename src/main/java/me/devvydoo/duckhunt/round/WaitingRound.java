@@ -38,7 +38,8 @@ public class WaitingRound implements Round {
 
     @Override
     public void endRound() {
-        infiniteTitleTask.cancel();
+        if (infiniteTitleTask != null)
+            infiniteTitleTask.cancel();
     }
 
     @Override
