@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="Duckhunt:jar">
-    <output-path>$PROJECT_DIR$/../../Minecraft Dev Server/Duck_Hunt/plugins</output-path>
-    <root id="archive" name="Duckhunt.jar">
-      <element id="module-output" name="Duckhunt" />
-    </root>
-  </artifact>
-</component>

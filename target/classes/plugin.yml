@@ -1,9 +1,0 @@
-name: Duckhunt
-version: 1.0-SNAPSHOT
-main: me.devvydoo.duckhunt.Duckhunt
-api-version: 1.13
-commands:
-  duckhunt:
-    description: Opens GUI for admins to setup duck hunt game
-    usage: /duckhunt
-    permission: op
