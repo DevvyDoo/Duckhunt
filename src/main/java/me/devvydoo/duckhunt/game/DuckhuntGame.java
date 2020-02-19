@@ -337,7 +337,6 @@ public class DuckhuntGame implements Listener {
 
         // Consider only the times where the two entities are players
         if (ducks != null && event.getEntity() instanceof Player && event.getDamager() instanceof Player){
-            System.out.println(ducks);
             Player hurt = (Player) event.getEntity();
             Player damager = (Player) event.getDamager();
 
