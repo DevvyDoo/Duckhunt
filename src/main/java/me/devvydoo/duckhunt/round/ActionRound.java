@@ -2,6 +2,7 @@ package me.devvydoo.duckhunt.round;
 
 import me.devvydoo.duckhunt.Duckhunt;
 import me.devvydoo.duckhunt.tasks.ExpTimerTask;
+import org.bukkit.scheduler.BukkitRunnable;
 
 public class ActionRound implements Round {
 
@@ -26,6 +27,14 @@ public class ActionRound implements Round {
 
         expTimerTask = new ExpTimerTask(plugin.getGame(), System.currentTimeMillis() + 180 * 1000, true);
         expTimerTask.runTaskTimer(plugin, 1, 1);
+
+        // Disable fall damage protection after a second
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                plugin.getGame().setCancelFallDamage(false);
+            }
+        }.runTaskLater(plugin, 20);
     }
 
     @Override
@@ -43,6 +52,8 @@ public class ActionRound implements Round {
         // We must be calling this from somewhere else... hmmm
         else
             plugin.getGame().announceRunnersWon("The hunter was defeated!");
+
+        plugin.getGame().setCancelFallDamage(true);
 
     }
 

@@ -36,7 +36,6 @@ public class PreRound implements Round {
             if (p.getAllowFlight())
                 p.setFlying(false);
             p.setAllowFlight(false);
-            p.setInvulnerable(false);
         }
 
         titleTimerTask.cancel();

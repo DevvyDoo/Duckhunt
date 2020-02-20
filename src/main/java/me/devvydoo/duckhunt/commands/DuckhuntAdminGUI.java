@@ -6,6 +6,7 @@ import me.devvydoo.duckhunt.round.WaitingRound;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -130,29 +131,39 @@ public class DuckhuntAdminGUI implements Listener, InventoryHolder {
             case HUNTER_SPAWN_SLOT:
                 game.setHunterSpawn(player.getLocation());
                 player.sendMessage(ChatColor.GREEN + "Hunter Spawn set!");
+                player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, .7f, 2);
                 initInterface();
                 break;
             case DUCK_SPAWN_SLOT:
                 game.setDuckSpawn(player.getLocation());
                 player.sendMessage(ChatColor.GREEN + "Duck spawn set!");
+                player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, .7f, 2);
                 initInterface();
                 break;
             case SPECTATOR_SPAWN_SLOT:
                 game.setSpectatorSpawn(player.getLocation());
                 player.sendMessage(ChatColor.GREEN + "Spectate spawn set!");
+                player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, .7f, 2);
                 initInterface();
                 break;
             case LOBBY_SPAWN_SLOT:
                 game.setLobbySpawn(player.getLocation());
                 player.sendMessage(ChatColor.GREEN + "Lobby spawn set!");
+                player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, .7f, 2);
                 initInterface();
                 break;
             case START_GAME_SLOT:
-                if (game.getCurrentRound() instanceof WaitingRound && game.isGameReady())
+                if (game.getCurrentRound() instanceof WaitingRound && game.isGameReady()) {
                     game.startGame();
+                    player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, .7f, 2);
+                    player.sendMessage(ChatColor.GREEN + "Starting a new game!");
+                }
                 else if (game.getCurrentRound() instanceof WaitingRound && !game.isGameReady()){}
-                else
+                else {
                     game.endGame();
+                    player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, .7f, 2);
+                    player.sendMessage(ChatColor.RED + "Ending the current game!");
+                }
                 initInterface();
                 break;
 

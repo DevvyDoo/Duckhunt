@@ -42,6 +42,8 @@ public class DuckhuntGame implements Listener {
     private int hunterWins = 0;
     private int runnerWins = 0;
 
+    private boolean cancelFallDamage = true;
+
     public DuckhuntGame(Duckhunt plugin, Location hunterSpawn, Location duckSpawn, Location spectatorSpawn, Location lobbySpawn, int timeLimit) {
         this(plugin);
         this.hunterSpawn = hunterSpawn;
@@ -56,6 +58,14 @@ public class DuckhuntGame implements Listener {
         updateActivePlayers();
         currentRound = new WaitingRound(plugin);
         currentRound.startRound();
+    }
+
+    public boolean isCancelFallDamage() {
+        return cancelFallDamage;
+    }
+
+    public void setCancelFallDamage(boolean cancelFallDamage) {
+        this.cancelFallDamage = cancelFallDamage;
     }
 
     public ItemStack getHunterBow(){
@@ -132,17 +142,20 @@ public class DuckhuntGame implements Listener {
         player.getInventory().clear();
 
         player.getInventory().addItem(new ItemStack(Material.WOODEN_SWORD));
-        player.getInventory().addItem(getRunnerPotion(PotionEffectType.SPEED, ChatColor.AQUA + "Speed Potion", 10, 1, true));
+        player.getInventory().addItem(getRunnerPotion(PotionEffectType.SPEED, ChatColor.AQUA + "Speed Potion", 10 * 20, 1, true));
         player.getInventory().addItem(getRunnerPotion(PotionEffectType.HEAL, ChatColor.RED + "Heal Potion", 1, 2, true));
         player.getInventory().addItem(getRunnerPotion(PotionEffectType.HEAL, ChatColor.RED + "Heal Potion", 1, 2, true));
         player.getInventory().addItem(new ItemStack(Material.GOLDEN_APPLE), new ItemStack(Material.COOKED_BEEF, 3));
 
         player.setGameMode(GameMode.ADVENTURE);
-        player.setFireTicks(0);
+        for (PotionEffectType type : PotionEffectType.values())
+            player.removePotionEffect(type);
+        if (player.getFireTicks() > 0)
+            player.setFireTicks(0);
         player.setHealth(20);
         player.setFoodLevel(20);
         player.setSaturation(20);
-
+        player.setInvulnerable(false);
 
         ducks.add(player);
     }
@@ -151,7 +164,7 @@ public class DuckhuntGame implements Listener {
 
         ducks.remove(player);
         player.sendTitle(ChatColor.RED + "You died!", ChatColor.GRAY + "Maybe next time...", 10, 30, 10);
-        player.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_DEATH, .5f, .5f);
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BAT_DEATH, .9f, .4f);
         setSpectator(player);
 
     }
@@ -169,7 +182,8 @@ public class DuckhuntGame implements Listener {
             }
         }
 
-        player.setFireTicks(0);
+        if (player.getFireTicks() > 0)
+            player.setFireTicks(0);
         player.setAllowFlight(true);
         player.setFlying(true);
         player.setInvulnerable(true);
@@ -238,10 +252,14 @@ public class DuckhuntGame implements Listener {
 
 
         player.setGameMode(GameMode.ADVENTURE);
-        player.setFireTicks(0);
+        for (PotionEffectType type : PotionEffectType.values())
+            player.removePotionEffect(type);
+        if (player.getFireTicks() > 0)
+            player.setFireTicks(0);
         player.setHealth(20);
         player.setFoodLevel(20);
         player.setSaturation(20);
+        player.setInvulnerable(false);
 
         this.hunter = player;
     }
@@ -313,7 +331,7 @@ public class DuckhuntGame implements Listener {
     public void announceHunterWon(String reason){
         for (Player p : plugin.getGame().getActivePlayers()) {
             p.sendTitle(ChatColor.RED + "Hunter wins!", ChatColor.GRAY + reason, 10, 5 * 20, 20);
-            p.playSound(p.getLocation(), Sound.ENTITY_DROWNED_AMBIENT, .8f, .3f);
+            p.playSound(p.getLocation(), Sound.ENTITY_DROWNED_AMBIENT, .8f, .4f);
         }
         hunterWins++;
         plugin.getServer().broadcastMessage(ChatColor.GRAY + "[" + ChatColor.GOLD + "Duck Hunt" + ChatColor.GRAY + "]" + ChatColor.GRAY + " Hunter wins! The Hunter has won " + ChatColor.GREEN.toString() + hunterWins + ChatColor.GRAY + " time" + (hunterWins > 1 ? "s" : ""));
@@ -326,6 +344,9 @@ public class DuckhuntGame implements Listener {
         // We don't care about non players
         if (!(event.getEntity() instanceof Player))
             return;
+
+        if (event.getCause().equals(EntityDamageEvent.DamageCause.FALL) && cancelFallDamage)
+            event.setCancelled(true);
 
         // Essentially godmode when we are not in action phase
         if (!(currentRound instanceof ActionRound))
@@ -357,6 +378,7 @@ public class DuckhuntGame implements Listener {
             Player playerDied = (Player) event.getEntity();
 
             if (playerDied.equals(hunter)){
+                playerDied.getWorld().playSound(playerDied.getLocation(), Sound.ENTITY_BAT_DEATH, .9f, .4f);
                 setSpectator(playerDied);
                 if (hunter.getKiller() != null)
                     playerDied.getServer().broadcastMessage(ChatColor.AQUA + ChatColor.stripColor(hunter.getKiller().getDisplayName()) + ChatColor.GRAY + " destroyed " + ChatColor.RED + ChatColor.stripColor(playerDied.getDisplayName()));
