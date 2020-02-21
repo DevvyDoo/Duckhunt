@@ -108,6 +108,7 @@ public class DuckhuntGame implements Listener {
         activePlayers = new ArrayList<>();
 
         for (Player player : plugin.getServer().getOnlinePlayers()) {
+            player.getAttribute(Attribute.GENERIC_ATTACK_SPEED).setBaseValue(128.0);
             if (player.isOp() && !this.isGameReady())
                 player.sendMessage(ChatColor.DARK_GRAY + "[" + ChatColor.RED + "Duck Hunt Admin" + ChatColor.DARK_GRAY + "]" + ChatColor.AQUA + " Be sure to setup spawn points using " + ChatColor.LIGHT_PURPLE + "/duckhunt " + ChatColor.AQUA + "if you haven't already!");
 
