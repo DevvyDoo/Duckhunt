@@ -449,14 +449,21 @@ public class DuckhuntGame implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event){
         updateActivePlayers();
+        activePlayers.remove(event.getPlayer());
 
         if (event.getPlayer().equals(hunter))
             nextRound();
-        else if (ducks.contains(event.getPlayer())){
+        else if (ducks != null && ducks.contains(event.getPlayer())){
             runnerDied(event.getPlayer());
             if (ducks.size() == 0)
                 nextRound();
         }
 
+    }
+
+    @EventHandler
+    public void onPlayerGamemodeChange(PlayerGameModeChangeEvent event){
+        if (currentRound instanceof WaitingRound && !activePlayers.contains(event.getPlayer()))
+            updateActivePlayers();
     }
 }
