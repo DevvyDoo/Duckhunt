@@ -3,6 +3,7 @@ package me.devvydoo.duckhunt.game;
 import me.devvydoo.duckhunt.Duckhunt;
 import me.devvydoo.duckhunt.round.*;
 import org.bukkit.*;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -11,6 +12,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
@@ -20,12 +22,14 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class DuckhuntGame implements Listener {
 
     public final int DEFAULT_TIME_LIMIT = 3 * 60;
     public final int DEFAULT_ROUND_LIMIT = 99;
     private Duckhunt plugin;
+    private World world;
     private Location hunterSpawn;
     private Location duckSpawn;
     private Location spectatorSpawn;
@@ -44,8 +48,9 @@ public class DuckhuntGame implements Listener {
 
     private boolean cancelFallDamage = true;
 
-    public DuckhuntGame(Duckhunt plugin, Location hunterSpawn, Location duckSpawn, Location spectatorSpawn, Location lobbySpawn, int timeLimit) {
+    public DuckhuntGame(Duckhunt plugin, World world, Location hunterSpawn, Location duckSpawn, Location spectatorSpawn, Location lobbySpawn, int timeLimit) {
         this(plugin);
+        this.world = world;
         this.hunterSpawn = hunterSpawn;
         this.duckSpawn = duckSpawn;
         this.spectatorSpawn = spectatorSpawn;
@@ -58,6 +63,10 @@ public class DuckhuntGame implements Listener {
         updateActivePlayers();
         currentRound = new WaitingRound(plugin);
         currentRound.startRound();
+    }
+
+    public World getWorld() {
+        return world;
     }
 
     public boolean isCancelFallDamage() {
@@ -95,8 +104,6 @@ public class DuckhuntGame implements Listener {
     }
 
     public void updateActivePlayers(){
-
-        if (currentRound == null || !currentRound.getRoundType().equals(RoundType.WAITING))
 
         activePlayers = new ArrayList<>();
 
@@ -141,9 +148,8 @@ public class DuckhuntGame implements Listener {
 
         player.getInventory().clear();
 
-        player.getInventory().addItem(new ItemStack(Material.WOODEN_SWORD));
+        player.getInventory().addItem(new ItemStack(Material.IRON_SWORD));
         player.getInventory().addItem(getRunnerPotion(PotionEffectType.SPEED, ChatColor.AQUA + "Speed Potion", 10 * 20, 1, true));
-        player.getInventory().addItem(getRunnerPotion(PotionEffectType.HEAL, ChatColor.RED + "Heal Potion", 1, 2, true));
         player.getInventory().addItem(getRunnerPotion(PotionEffectType.HEAL, ChatColor.RED + "Heal Potion", 1, 2, true));
         player.getInventory().addItem(new ItemStack(Material.GOLDEN_APPLE), new ItemStack(Material.COOKED_BEEF, 3));
 
@@ -194,6 +200,12 @@ public class DuckhuntGame implements Listener {
     }
 
     public void setHunterSpawn(Location hunterSpawn) {
+        if (world == null)
+            world = hunterSpawn.getWorld();
+        else {
+            if (!world.equals(hunterSpawn.getWorld()))
+                return;
+        }
         this.hunterSpawn = hunterSpawn;
     }
 
@@ -202,6 +214,12 @@ public class DuckhuntGame implements Listener {
     }
 
     public void setDuckSpawn(Location duckSpawn) {
+        if (world == null)
+            world = duckSpawn.getWorld();
+        else {
+            if (!world.equals(duckSpawn.getWorld()))
+                return;
+        }
         this.duckSpawn = duckSpawn;
     }
 
@@ -210,6 +228,12 @@ public class DuckhuntGame implements Listener {
     }
 
     public void setSpectatorSpawn(Location spectatorSpawn) {
+        if (world == null)
+            world = spectatorSpawn.getWorld();
+        else {
+            if (!world.equals(spectatorSpawn.getWorld()))
+                return;
+        }
         this.spectatorSpawn = spectatorSpawn;
     }
 
@@ -218,6 +242,12 @@ public class DuckhuntGame implements Listener {
     }
 
     public void setLobbySpawn(Location lobbySpawn) {
+        if (world == null)
+            world = lobbySpawn.getWorld();
+        else {
+            if (!world.equals(lobbySpawn.getWorld()))
+                return;
+        }
         this.lobbySpawn = lobbySpawn;
     }
 
@@ -276,6 +306,7 @@ public class DuckhuntGame implements Listener {
         if (this.currentRound.getRoundType().equals(RoundType.WAITING) && isGameReady()) {
             hunterWins = 0;
             runnerWins = 0;
+            plugin.updateWorldLocations(world, this);
             nextRound();
         }
         else
@@ -291,7 +322,7 @@ public class DuckhuntGame implements Listener {
                 this.currentRound = new WaitingRound(plugin);
                 break;
             case PREGAME:
-                if (DEFAULT_ROUND_LIMIT <= runnerWins + hunterWins){
+                if (DEFAULT_ROUND_LIMIT <= runnerWins + hunterWins || activePlayers.size() <= 1){
                     this.currentRound = new WaitingRound(plugin);
                     break;
                 }
@@ -316,7 +347,7 @@ public class DuckhuntGame implements Listener {
     }
 
     public boolean isGameReady(){
-        return hunterSpawn != null && duckSpawn != null && spectatorSpawn != null && lobbySpawn != null && timeLimit != 0 && activePlayers != null && !activePlayers.isEmpty();
+        return hunterSpawn != null && duckSpawn != null && spectatorSpawn != null && lobbySpawn != null && timeLimit != 0 && activePlayers != null && activePlayers.size() > 1;
     }
 
     public void announceRunnersWon(String reason){
@@ -407,6 +438,10 @@ public class DuckhuntGame implements Listener {
         if (!(currentRound instanceof WaitingRound)){
             setSpectator(event.getPlayer());
         }
+        if (lobbySpawn != null)
+            event.getPlayer().teleport(lobbySpawn);
+        else
+            event.getPlayer().teleport(event.getPlayer().getWorld().getSpawnLocation());
     }
 
     @EventHandler
