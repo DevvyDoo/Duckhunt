@@ -407,6 +407,7 @@ public class DuckhuntGame implements Listener {
             event.setCancelled(true);
 
             Player playerDied = (Player) event.getEntity();
+            playerDied.getInventory().clear();
 
             if (playerDied.equals(hunter)){
                 playerDied.getWorld().playSound(playerDied.getLocation(), Sound.ENTITY_BAT_DEATH, .9f, .4f);

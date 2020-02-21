@@ -3,6 +3,7 @@ package me.devvydoo.duckhunt.round;
 import me.devvydoo.duckhunt.Duckhunt;
 import me.devvydoo.duckhunt.tasks.ExpTimerTask;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 
 public class PostRound implements Round {
@@ -40,15 +41,17 @@ public class PostRound implements Round {
 
             p.setExp(0);
             p.setLevel(0);
-
             p.getInventory().clear();
-            p.teleport(plugin.getGame().getLobbySpawn());
 
             for (Player oP : Bukkit.getOnlinePlayers()){
                 if (p != oP)
                     p.showPlayer(plugin, oP);
             }
+        }
 
+        // Remove all items on the ground
+        for (Item drop : plugin.getGame().getWorld().getEntitiesByClass(Item.class)){
+            drop.remove();
         }
 
     }

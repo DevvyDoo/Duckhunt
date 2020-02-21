@@ -112,6 +112,7 @@ public class DuckhuntAdminGUI implements Listener, InventoryHolder {
     }
 
     public void openInterface(Player player){
+        initInterface();
         player.openInventory(inventory);
     }
 
