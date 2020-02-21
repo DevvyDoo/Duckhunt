@@ -393,11 +393,13 @@ public class DuckhuntGame implements Listener {
             Player hurt = (Player) event.getEntity();
             Player damager = (Player) event.getDamager();
 
-            // If they are both a duck, disable the damage
-            if (ducks.contains(hurt) && ducks.contains(damager)){
+            // If the either of the two cant see each other don't let it hpapen
+            if (!hurt.canSee(damager) || !damager.canSee(hurt))
                 event.setCancelled(true);
-            }
 
+            // If they are both a duck, disable the damage
+            if (ducks.contains(hurt) && ducks.contains(damager))
+                event.setCancelled(true);
         }
 
     }
