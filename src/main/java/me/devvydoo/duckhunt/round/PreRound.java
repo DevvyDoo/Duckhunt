@@ -2,6 +2,7 @@ package me.devvydoo.duckhunt.round;
 
 import me.devvydoo.duckhunt.Duckhunt;
 import me.devvydoo.duckhunt.tasks.TitleTimerTask;
+import me.devvydoo.duckhunt.util.CustomItems;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Item;
@@ -24,7 +25,12 @@ public class PreRound implements Round {
     @Override
     public void startRound() {
         for (Player p : plugin.getGame().getActivePlayers()) {
+
             p.getInventory().clear();
+
+            if (p.isOp())
+                p.getInventory().addItem(plugin.getCustomItemManager().getCustomItemOfType(CustomItems.ADMIN_FEATHER));
+
             p.sendTitle(ChatColor.GREEN + "Starting game...", "", 10, 12 * 20, 40);
             if (p.getGameMode().equals(GameMode.ADVENTURE) || p.getGameMode().equals(GameMode.SURVIVAL))
                 p.setAllowFlight(false);

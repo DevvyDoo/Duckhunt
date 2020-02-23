@@ -2,9 +2,9 @@ package me.devvydoo.duckhunt;
 
 import me.devvydoo.duckhunt.commands.DuckhuntCommand;
 import me.devvydoo.duckhunt.game.DuckhuntGame;
+import me.devvydoo.duckhunt.util.CustomItemManager;
 import me.devvydoo.duckhunt.util.DuckhuntFile;
 import org.bukkit.World;
-import org.bukkit.WorldCreator;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.WorldLoadEvent;
@@ -16,24 +16,28 @@ import java.util.HashMap;
 public final class Duckhunt extends JavaPlugin implements Listener {
 
     private DuckhuntGame game;
+    private CustomItemManager customItemManager;
 
-    private String configFileName = "duckhunt.options";
     private HashMap<World, DuckhuntFile> worldConfigMap = new HashMap<>();
 
     public DuckhuntGame getGame() {
         return game;
     }
 
+    public CustomItemManager getCustomItemManager(){
+        return customItemManager;
+    }
+
     public void updateWorldLocations(World world, DuckhuntGame game){
         worldConfigMap.get(world).updateLocations(game);
     }
 
-    @Override
-    public void onEnable() {
-
+    private void setupServerSettings(){
         getServer().setSpawnRadius(0);
+    }
 
-        getServer().getPluginManager().registerEvents(this, this);
+
+    private void setupWorldConfigs(){
 
         String rootPath = getServer().getWorldContainer().getAbsolutePath();
         rootPath = rootPath.substring(0, rootPath.length() - 1);
@@ -57,13 +61,23 @@ public final class Duckhunt extends JavaPlugin implements Listener {
         if (game == null)
             game = new DuckhuntGame(this);
 
-        getServer().getPluginManager().registerEvents(game, this);
-        getCommand("duckhunt").setExecutor(new DuckhuntCommand(this));
     }
 
+
     @Override
-    public void onDisable() {
-        // Plugin shutdown logic
+    public void onEnable() {
+
+        setupWorldConfigs();
+        setupServerSettings();
+
+        customItemManager = new CustomItemManager(this);
+        DuckhuntCommand duckhuntCommand = new DuckhuntCommand(this);
+
+        getCommand("duckhunt").setExecutor(duckhuntCommand);
+
+        getServer().getPluginManager().registerEvents(this, this);
+        getServer().getPluginManager().registerEvents(game, this);
+
     }
 
     @EventHandler

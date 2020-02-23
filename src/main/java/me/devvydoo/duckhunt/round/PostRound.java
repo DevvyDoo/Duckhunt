@@ -2,6 +2,7 @@ package me.devvydoo.duckhunt.round;
 
 import me.devvydoo.duckhunt.Duckhunt;
 import me.devvydoo.duckhunt.tasks.ExpTimerTask;
+import me.devvydoo.duckhunt.util.CustomItems;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -42,6 +43,8 @@ public class PostRound implements Round {
             p.setExp(0);
             p.setLevel(0);
             p.getInventory().clear();
+            if (p.isOp())
+                p.getInventory().addItem(plugin.getCustomItemManager().getCustomItemOfType(CustomItems.ADMIN_FEATHER));
 
             for (Player oP : Bukkit.getOnlinePlayers()){
                 if (p != oP)

@@ -2,27 +2,23 @@ package me.devvydoo.duckhunt.game;
 
 import me.devvydoo.duckhunt.Duckhunt;
 import me.devvydoo.duckhunt.round.*;
+import me.devvydoo.duckhunt.util.CustomItems;
+import me.devvydoo.duckhunt.util.GameItems;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.event.player.PlayerGameModeChangeEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.PotionMeta;
-import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class DuckhuntGame implements Listener {
 
@@ -69,45 +65,20 @@ public class DuckhuntGame implements Listener {
         return world;
     }
 
-    public boolean isCancelFallDamage() {
-        return cancelFallDamage;
-    }
-
     public void setCancelFallDamage(boolean cancelFallDamage) {
         this.cancelFallDamage = cancelFallDamage;
     }
 
-    public ItemStack getHunterBow(){
-        ItemStack bow = new ItemStack(Material.BOW);
-        ItemMeta meta = bow.getItemMeta();
-        meta.setDisplayName(ChatColor.GOLD + "Hunter's Bow");
-        bow.setItemMeta(meta);
-        bow.addEnchantment(Enchantment.ARROW_DAMAGE, 2);
-        bow.addEnchantment(Enchantment.ARROW_INFINITE, 1);
-        return bow;
-    }
-
-    public ItemStack getRunnerPotion(PotionEffectType type, String name, int time, int amplifier, boolean wantSplash){
-        ItemStack pot;
-        if (wantSplash)
-            pot = new ItemStack(Material.SPLASH_POTION);
-        else
-            pot = new ItemStack(Material.POTION);
-        PotionMeta potionMeta = (PotionMeta) pot.getItemMeta();
-        if (type.equals(PotionEffectType.SPEED))
-            potionMeta.setColor(Color.AQUA);
-        PotionEffect heal = new PotionEffect(type, time, amplifier);
-        potionMeta.addCustomEffect(heal, true);
-        potionMeta.setDisplayName(name);
-        pot.setItemMeta(potionMeta);
-        return pot;
-    }
 
     public void updateActivePlayers(){
 
         activePlayers = new ArrayList<>();
 
         for (Player player : plugin.getServer().getOnlinePlayers()) {
+
+            if (activePlayers.contains(player))
+                continue;
+
             player.getAttribute(Attribute.GENERIC_ATTACK_SPEED).setBaseValue(128.0);
             if (player.isOp() && !this.isGameReady())
                 player.sendMessage(ChatColor.DARK_GRAY + "[" + ChatColor.RED + "Duck Hunt Admin" + ChatColor.DARK_GRAY + "]" + ChatColor.AQUA + " Be sure to setup spawn points using " + ChatColor.LIGHT_PURPLE + "/duckhunt " + ChatColor.AQUA + "if you haven't already!");
@@ -120,6 +91,9 @@ public class DuckhuntGame implements Listener {
                 player.sendTitle(ChatColor.RED + "Not in Next Game", ChatColor.GRAY + "You are in an invalid gamemode", 10, 200, 10);
 
         }
+
+        // Remove any offline players
+        activePlayers.removeIf(p -> !p.isOnline());
 
     }
 
@@ -139,30 +113,34 @@ public class DuckhuntGame implements Listener {
             else
                 setRunner(player);
         }
+    }
 
+    public void setHunter(Player player){
+        player.teleport(hunterSpawn);
+        player.sendTitle(ChatColor.RED + "HUNTER", ChatColor.GRAY + "Do whatever it takes to eliminate the runners!", 10, 80, 10);
+        player.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, .4f, .4f);
+
+        player.getInventory().clear();
+
+        for (ItemStack item : GameItems.getHunterKit())
+            player.getInventory().addItem(item);
+
+        transitionPlayer(player);
+
+        this.hunter = player;
     }
 
     public void setRunner(Player player){
         player.teleport(duckSpawn);
         player.sendTitle(ChatColor.BLUE + "RUNNER", ChatColor.GRAY + "Make it to the escape and defeat the hunter!", 10, 80, 10);
-        player.playSound(player.getLocation(), Sound.ENTITY_CHICKEN_DEATH, .6f, 1);
+        player.playSound(player.getLocation(), Sound.ENTITY_CHICKEN_DEATH, .85f, 1);
 
         player.getInventory().clear();
 
-        player.getInventory().addItem(new ItemStack(Material.IRON_SWORD));
-        player.getInventory().addItem(getRunnerPotion(PotionEffectType.SPEED, ChatColor.AQUA + "Speed Potion", 10 * 20, 1, true));
-        player.getInventory().addItem(getRunnerPotion(PotionEffectType.HEAL, ChatColor.RED + "Heal Potion", 1, 2, true));
-        player.getInventory().addItem(new ItemStack(Material.GOLDEN_APPLE), new ItemStack(Material.COOKED_BEEF, 3));
+        for (ItemStack item : GameItems.getRunnerKit())
+            player.getInventory().addItem(item);
 
-        player.setGameMode(GameMode.ADVENTURE);
-        for (PotionEffectType type : PotionEffectType.values())
-            player.removePotionEffect(type);
-        if (player.getFireTicks() > 0)
-            player.setFireTicks(0);
-        player.setHealth(20);
-        player.setFoodLevel(20);
-        player.setSaturation(20);
-        player.setInvulnerable(false);
+        transitionPlayer(player);
 
         ducks.add(player);
     }
@@ -194,6 +172,7 @@ public class DuckhuntGame implements Listener {
         player.setAllowFlight(true);
         player.setFlying(true);
         player.setInvulnerable(true);
+        player.setCanPickupItems(false);
     }
 
     public Location getHunterSpawn() {
@@ -256,10 +235,6 @@ public class DuckhuntGame implements Listener {
         return timeLimit;
     }
 
-    public void setTimeLimit(int timeLimit) {
-        this.timeLimit = timeLimit;
-    }
-
     public ArrayList<Player> getActivePlayers() {
         return activePlayers;
     }
@@ -268,20 +243,7 @@ public class DuckhuntGame implements Listener {
         return currentRound;
     }
 
-    public Player getHunter() {
-        return hunter;
-    }
-
-    public void setHunter(Player player){
-        player.teleport(hunterSpawn);
-        player.sendTitle(ChatColor.RED + "HUNTER", ChatColor.GRAY + "Do whatever it takes to eliminate the runners!", 10, 80, 10);
-        player.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, .4f, .4f);
-
-        player.getInventory().clear();
-
-        player.getInventory().addItem(getHunterBow(), new ItemStack(Material.ARROW, 64), new ItemStack(Material.COOKED_BEEF, 16));
-
-
+    private void transitionPlayer(Player player) {
         player.setGameMode(GameMode.ADVENTURE);
         for (PotionEffectType type : PotionEffectType.values())
             player.removePotionEffect(type);
@@ -291,16 +253,10 @@ public class DuckhuntGame implements Listener {
         player.setFoodLevel(20);
         player.setSaturation(20);
         player.setInvulnerable(false);
-
-        this.hunter = player;
     }
 
     public ArrayList<Player> getDucks() {
         return ducks;
-    }
-
-    public boolean isActivePlayer(Player player){
-        return activePlayers.contains(player);
     }
 
     public void startGame(){
@@ -410,16 +366,23 @@ public class DuckhuntGame implements Listener {
             event.setCancelled(true);
 
             Player playerDied = (Player) event.getEntity();
+
+            for (ItemStack invItem : playerDied.getInventory().getContents()){
+                if (invItem != null)
+                    playerDied.getWorld().dropItemNaturally(playerDied.getEyeLocation(), invItem);
+            }
+
             playerDied.getInventory().clear();
+            if (playerDied.isOp())
+                playerDied.getInventory().addItem(plugin.getCustomItemManager().getCustomItemOfType(CustomItems.ADMIN_FEATHER));
 
             if (playerDied.equals(hunter)){
                 playerDied.getWorld().playSound(playerDied.getLocation(), Sound.ENTITY_BAT_DEATH, .9f, .4f);
                 setSpectator(playerDied);
-                if (hunter.getKiller() != null)
+                if (hunter.getKiller() != null && !hunter.getKiller().equals(hunter))
                     playerDied.getServer().broadcastMessage(ChatColor.AQUA + ChatColor.stripColor(hunter.getKiller().getDisplayName()) + ChatColor.GRAY + " destroyed " + ChatColor.RED + ChatColor.stripColor(playerDied.getDisplayName()));
                 else
                     playerDied.getServer().broadcastMessage(ChatColor.RED + ChatColor.stripColor(playerDied.getDisplayName()) + ChatColor.GRAY + " died to unknown causes...");
-//                announceRunnersWon();
                 nextRound();
             } else if (ducks.contains(playerDied)){
                 runnerDied(playerDied);
@@ -431,21 +394,25 @@ public class DuckhuntGame implements Listener {
                 if (ducks.size() == 0)
                     nextRound();
             }
-
-
         }
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event){
+
         updateActivePlayers();
-        if (!(currentRound instanceof WaitingRound)){
+
+        if (!(currentRound instanceof WaitingRound))
             setSpectator(event.getPlayer());
-        }
+
         if (lobbySpawn != null)
             event.getPlayer().teleport(lobbySpawn);
         else
             event.getPlayer().teleport(event.getPlayer().getWorld().getSpawnLocation());
+
+        event.getPlayer().getInventory().clear();
+        if (event.getPlayer().isOp())
+            event.getPlayer().getInventory().addItem(plugin.getCustomItemManager().getCustomItemOfType(CustomItems.ADMIN_FEATHER));
     }
 
     @EventHandler
@@ -460,6 +427,7 @@ public class DuckhuntGame implements Listener {
             if (ducks.size() == 0)
                 nextRound();
         }
+        event.getPlayer().getInventory().clear();
 
     }
 
@@ -467,5 +435,19 @@ public class DuckhuntGame implements Listener {
     public void onPlayerGamemodeChange(PlayerGameModeChangeEvent event){
         if (currentRound instanceof WaitingRound && !activePlayers.contains(event.getPlayer()))
             updateActivePlayers();
+    }
+
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent event){
+        if (event.getPlayer().isOp())
+            return;
+
+        event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onSpectatorInteract(PlayerInteractEvent event){
+        if (currentRound instanceof ActionRound && event.getPlayer().getAllowFlight())
+            event.setCancelled(true);
     }
 }

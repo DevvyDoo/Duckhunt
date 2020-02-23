@@ -2,6 +2,7 @@ package me.devvydoo.duckhunt.round;
 
 import me.devvydoo.duckhunt.Duckhunt;
 import me.devvydoo.duckhunt.tasks.ExpTimerTask;
+import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
 public class ActionRound implements Round {
@@ -35,6 +36,9 @@ public class ActionRound implements Round {
                 plugin.getGame().setCancelFallDamage(false);
             }
         }.runTaskLater(plugin, 20);
+
+        for (Player player : plugin.getGame().getActivePlayers())
+            player.setCanPickupItems(true);
     }
 
     @Override
@@ -54,6 +58,9 @@ public class ActionRound implements Round {
             plugin.getGame().announceRunnersWon("The hunter was defeated!");
 
         plugin.getGame().setCancelFallDamage(true);
+
+        for (Player player : plugin.getGame().getActivePlayers())
+            player.setCanPickupItems(false);
 
     }
 
