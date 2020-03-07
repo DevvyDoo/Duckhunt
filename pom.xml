@@ -6,7 +6,7 @@
 
     <groupId>me.devvydoo</groupId>
     <artifactId>Duckhunt</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>v0.1-alpha</version>
     <packaging>jar</packaging>
 
     <name>Duckhunt</name>
